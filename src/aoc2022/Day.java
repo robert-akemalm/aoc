@@ -8,11 +8,10 @@ public class Day {
         b(INPUT);
     }
 
-
-    private static void b(String input) {
+    private static void a(String input) {
     }
 
-    private static void a(String input) {
+    private static void b(String input) {
     }
 
     private static final String TEST_INPUT = "";

@@ -11,16 +11,6 @@ public class Day10 {
         b(INPUT);
     }
 
-    private static void b(String input) {
-        List<Op> ops = parse(input);
-        Cpu cpu = new Cpu();
-        for (Op op : ops) {
-            cpu.run(op);
-        }
-        Util.print(cpu.screen, '\u2588', ' ');
-//        Util.print(cpu.screen, '#', '.');
-    }
-
     private static void a(String input) {
         List<Op> ops = parse(input);
         Cpu cpu = new Cpu();
@@ -29,6 +19,16 @@ public class Day10 {
         }
         long sum = IntStream.of(20, 60, 100, 140, 180, 220).mapToLong(cycle -> cpu.cycleToSignalStrength[cycle]).sum();
         System.out.println(sum);
+    }
+
+    private static void b(String input) {
+        List<Op> ops = parse(input);
+        Cpu cpu = new Cpu();
+        for (Op op : ops) {
+            cpu.run(op);
+        }
+        Util.print(cpu.screen, '\u2588', ' ');
+//        Util.print(cpu.screen, '#', '.');
     }
 
     static List<Op> parse(String input) {

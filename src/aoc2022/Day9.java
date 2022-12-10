@@ -15,6 +15,21 @@ public class Day9 {
         b(INPUT);
     }
 
+    private static void a(String input) {
+        Set<Pos> seenTail = new HashSet<>();
+        Pos head = new Pos(0, 0);
+        Pos tail = new Pos(0, 0);
+        List<Move> moves = input.lines().map(Move::parse).toList();
+        for (Move move : moves) {
+            for (int i = 0; i < move.amount; i++) {
+                head = move(head, move.direction);
+                tail = moveTail(head, tail);
+                seenTail.add(tail);
+            }
+        }
+        System.out.println(seenTail.size());
+    }
+
     private static void b(String input) {
         Set<Pos> seenTail = new HashSet<>();
         List<Pos> knots = new ArrayList<>();
@@ -33,6 +48,14 @@ public class Day9 {
             }
         }
         System.out.println(seenTail.size());
+    }
+
+    private enum Direction {R, U, L, D}
+
+    private record Move(Direction direction, int amount) {
+        static Move parse(String line) {
+            return new Move(Direction.valueOf(line.substring(0, 1)), Integer.parseInt(line.substring(2)));
+        }
     }
 
     private static Direction direction(Pos head, Pos tail) {
@@ -77,29 +100,6 @@ public class Day9 {
             return move(tail, direction);
         }
     }
-
-    private static void a(String input) {
-        Set<Pos> seenTail = new HashSet<>();
-        Pos head = new Pos(0, 0);
-        Pos tail = new Pos(0, 0);
-        List<Move> moves = input.lines().map(Move::parse).toList();
-        for (Move move : moves) {
-            for (int i = 0; i < move.amount; i++) {
-                head = move(head, move.direction);
-                tail = moveTail(head, tail);
-                seenTail.add(tail);
-            }
-        }
-        System.out.println(seenTail.size());
-    }
-
-    private record Move(Direction direction, int amount) {
-        static Move parse(String line) {
-            return new Move(Direction.valueOf(line.substring(0, 1)), Integer.parseInt(line.substring(2)));
-        }
-    }
-
-    private enum Direction {R, U, L, D}
 
     private static final String TEST_INPUT = "R 4\n"
                                              + "U 4\n"

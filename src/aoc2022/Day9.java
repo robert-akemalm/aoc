@@ -36,13 +36,13 @@ public class Day9 {
     }
 
     private static Direction direction(Pos head, Pos tail) {
-        if (head.x > tail.x + 1) {
+        if (head.x() > tail.x() + 1) {
             return Direction.R;
-        } else if (head.x < tail.x - 1) {
+        } else if (head.x() < tail.x() - 1) {
             return Direction.L;
-        } else if (head.y > tail.y + 1) {
+        } else if (head.y() > tail.y() + 1) {
             return Direction.U;
-        } else if (head.y < tail.y - 1) {
+        } else if (head.y() < tail.y() - 1) {
             return Direction.D;
         }
         return null;
@@ -50,10 +50,10 @@ public class Day9 {
 
     private static Pos move(Pos pos, Direction direction) {
         return switch (direction) {
-            case R -> new Pos(pos.x + 1, pos.y);
-            case U -> new Pos(pos.x, pos.y + 1);
-            case L -> new Pos(pos.x - 1, pos.y);
-            case D -> new Pos(pos.x, pos.y - 1);
+            case R -> new Pos(pos.x() + 1, pos.y());
+            case U -> new Pos(pos.x(), pos.y() + 1);
+            case L -> new Pos(pos.x() - 1, pos.y());
+            case D -> new Pos(pos.x(), pos.y() - 1);
         };
     }
 
@@ -63,15 +63,15 @@ public class Day9 {
             return tail;
         }
 
-        boolean moveDiagonal = Math.abs(head.x - tail.x) > 1 && head.y != tail.y
-                               || Math.abs(head.y - tail.y) > 1 && head.x != tail.x;
+        boolean moveDiagonal = Math.abs(head.x() - tail.x()) > 1 && head.y() != tail.y()
+                               || Math.abs(head.y() - tail.y()) > 1 && head.x() != tail.x();
 
         if (moveDiagonal) {
             return switch (direction) {
-                case R -> head.y < tail.y ? new Pos(tail.x + 1, tail.y - 1) : new Pos(tail.x + 1, tail.y + 1);
-                case U -> head.x < tail.x ? new Pos(tail.x - 1, tail.y + 1) : new Pos(tail.x + 1, tail.y + 1);
-                case L -> head.y < tail.y ? new Pos(tail.x - 1, tail.y - 1) : new Pos(tail.x - 1, tail.y + 1);
-                case D -> head.x < tail.x ? new Pos(tail.x - 1, tail.y - 1) : new Pos(head.x, tail.y - 1);
+                case R -> head.y() < tail.y() ? new Pos(tail.x() + 1, tail.y() - 1) : new Pos(tail.x() + 1, tail.y() + 1);
+                case U -> head.x() < tail.x() ? new Pos(tail.x() - 1, tail.y() + 1) : new Pos(tail.x() + 1, tail.y() + 1);
+                case L -> head.y() < tail.y() ? new Pos(tail.x() - 1, tail.y() - 1) : new Pos(tail.x() - 1, tail.y() + 1);
+                case D -> head.x() < tail.x() ? new Pos(tail.x() - 1, tail.y() - 1) : new Pos(head.x(), tail.y() - 1);
             };
         } else {
             return move(tail, direction);

@@ -1,7 +1,9 @@
 package aoc2022;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 public class Util {
@@ -65,6 +67,10 @@ public class Util {
     }
 
     public record Pos(int x, int y) {
+
+        public List<Pos> neighbours() {
+            return new ArrayList<>(List.of(new Pos(x + 1, y), new Pos(x - 1, y), new Pos(x, y + 1), new Pos(x, y - 1)));
+        }
         @Override
         public String toString() {
             return x + "," + y;

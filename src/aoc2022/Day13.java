@@ -34,9 +34,7 @@ public class Day13 {
         packages.sort(Comparator.comparing(Package::asListValue));
         int result = 1;
         for (int i = 0; i < packages.size(); i++) {
-            if (packages.get(i) == divider1) {
-                result *= (i + 1);
-            } else if (packages.get(i) == divider2) {
+            if (packages.get(i) == divider1 || packages.get(i) == divider2) {
                 result *= (i + 1);
             }
         }

@@ -19,6 +19,10 @@ public class Util {
     }
 
     static String print(Map<Pos, Integer> positions, Map<Integer, Character> drawings) {
+        return print(positions, drawings, true);
+    }
+
+    static String print(Map<Pos, Integer> positions, Map<Integer, Character> drawings, boolean yDesc) {
         int minX = positions.keySet().stream().mapToInt(p -> p.x).min().orElse(0);
         int maxX = positions.keySet().stream().mapToInt(p -> p.x).max().orElse(0) + 1;
         int minY = positions.keySet().stream().mapToInt(p -> p.y).min().orElse(0);
@@ -34,14 +38,23 @@ public class Util {
             print[pos.y - minY][pos.x - minX] = drawings.get(positions.get(pos));
         }
         StringBuilder sb = new StringBuilder();
-        for (int i = print.length - 1; i >= 0; i--) {
-            char[] row = print[i];
-            for (char b : row) {
-                sb.append(b);
+        if (yDesc) {
+            for (int i = 0; i < print.length; i++) {
+                char[] row = print[i];
+                for (char b : row) {
+                    sb.append(b);
+                }
+                sb.append('\n');
             }
-            sb.append('\n');
+        } else {
+            for (int i = print.length - 1; i >= 0; i--) {
+                char[] row = print[i];
+                for (char b : row) {
+                    sb.append(b);
+                }
+                sb.append('\n');
+            }
         }
-//        System.out.println(sb);
         return sb.toString();
     }
 

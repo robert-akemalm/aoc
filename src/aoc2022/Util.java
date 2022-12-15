@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Util {
 
@@ -84,9 +86,24 @@ public class Util {
         public List<Pos> neighbours() {
             return new ArrayList<>(List.of(new Pos(x + 1, y), new Pos(x - 1, y), new Pos(x, y + 1), new Pos(x, y - 1)));
         }
+
         @Override
         public String toString() {
             return x + "," + y;
         }
+
+        public int manhattanDistanceTo(Pos pos) {
+            return Math.abs(pos.x - x) + Math.abs(pos.y - y);
+        }
+    }
+
+    public static int[] extractInts(String input) {
+        Pattern p = Pattern.compile("-?[0-9]+");
+        Matcher m = p.matcher(input);
+        List<Integer> ints = new ArrayList<>();
+        while (m.find()) {
+            ints.add(Integer.parseInt(m.group()));
+        }
+        return ints.stream().mapToInt(i -> i).toArray();
     }
 }

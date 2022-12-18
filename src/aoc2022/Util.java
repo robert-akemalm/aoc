@@ -11,7 +11,8 @@ import java.util.regex.Pattern;
 public class Util {
 
     static void print(boolean[][] matrix, char trueChar, char falseChar) {
-        for (boolean[] row : matrix) {
+        for (int i = matrix.length-1; i >= 0; i--) {
+            boolean[] row = matrix[i];
             for (boolean b : row) {
                 System.out.print(b ? trueChar : falseChar);
             }

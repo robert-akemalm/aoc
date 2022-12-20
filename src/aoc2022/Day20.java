@@ -5,10 +5,10 @@ import java.util.Map;
 
 public class Day20 {
     public static void main(String[] args) {
-        Util.time(()-> a(TEST_INPUT));
-        Util.time(()->a(INPUT));
-        Util.time(()->b(TEST_INPUT));
-        Util.time(()->b(INPUT));
+        Util.time(() -> a(TEST_INPUT));
+        Util.time(() -> a(INPUT));
+        Util.time(() -> b(TEST_INPUT));
+        Util.time(() -> b(INPUT));
     }
 
     private static void a(String input) {
@@ -24,7 +24,7 @@ public class Day20 {
     }
 
     private static void b(String input) {
-        Data data = new Data(input.lines().mapToLong(Long::parseLong).map(v->v*811589153L).toArray());
+        Data data = new Data(input.lines().mapToLong(Long::parseLong).map(v -> v * 811589153L).toArray());
         for (int round = 0; round < 10; round++) {
             data.shuffle();
         }
@@ -43,7 +43,7 @@ public class Day20 {
         Node first;
         Node last;
 
-        public Data(long[] data) {
+        Data(long[] data) {
             this.length = data.length;
             Node prev = new Node(-1, -1);
             for (int i = 0; i < length; i++) {
@@ -55,7 +55,7 @@ public class Day20 {
             }
 
             this.first = originalIxToNode.get(0);
-            this.last = originalIxToNode.get(length-1);
+            this.last = originalIxToNode.get(length - 1);
             this.first.prev = this.last;
             this.last.next = first;
         }
@@ -65,8 +65,8 @@ public class Day20 {
             Node lastAfterShuffle = last;
             for (int i = 0; i < length; i++) {
                 Node node = originalIxToNode.get(i);
-                int move = (int) (node.val % (length-1));
-                if (move==0) {
+                int move = (int) (node.val % (length - 1));
+                if (move == 0) {
                     continue;
                 }
                 node.prev.next = node.next;
@@ -135,7 +135,7 @@ public class Day20 {
         Node prev;
         Node next;
 
-        private Node(int originalIx, long val) {
+        Node(int originalIx, long val) {
             this.originalIx = originalIx;
             this.val = val;
         }

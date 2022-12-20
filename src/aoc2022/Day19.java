@@ -9,15 +9,15 @@ import java.util.Set;
 
 public class Day19 {
     public static void main(String[] args) {
-        Util.time(()-> a(TEST_INPUT));
-        Util.time(()->a(INPUT));
-        Util.time(()->b(TEST_INPUT));
-        Util.time(()->b(INPUT));
+        Util.time(() -> a(TEST_INPUT));
+        Util.time(() -> a(INPUT));
+        Util.time(() -> b(TEST_INPUT));
+        Util.time(() -> b(INPUT));
     }
 
     private static void a(String input) {
         List<Blueprint> blueprints = input.lines().map(Blueprint::parse).toList();
-        int sum = blueprints.stream().map(b->new QualityTester(b, 24)).mapToInt(QualityTester::quality).sum();
+        int sum = blueprints.stream().map(b -> new QualityTester(b, 24)).mapToInt(QualityTester::quality).sum();
         System.out.println(sum);
 
     }
@@ -40,7 +40,7 @@ public class Day19 {
         final int timeLimit;
         int max = 0;
 
-        public QualityTester(Blueprint blueprint, int timeLimit) {
+        QualityTester(Blueprint blueprint, int timeLimit) {
             this.blueprint = blueprint;
             this.maxResourcesForBuild = blueprint.maxResourcesForBuild();
             this.timeLimit = timeLimit;
@@ -68,14 +68,14 @@ public class Day19 {
         }
 
         private boolean canSkipBuild(State state) {
-            return !blueprint.robots.stream().allMatch(r->r.canBeBuilt(state));
+            return !blueprint.robots.stream().allMatch(r -> r.canBeBuilt(state));
         }
     }
 
     private record State(int minutes, int numOre, int numClay, int numObsidian, int numGeode,
                          int oreRobots, int clayRobots, int obsidianRobots, int geodeRobots) {
 
-        public int num(Material material) {
+        int num(Material material) {
             return switch (material) {
                 case ore -> numOre;
                 case clay -> numClay;
@@ -84,13 +84,13 @@ public class Day19 {
             };
         }
 
-        public State tick() {
+        State tick() {
             return new State(minutes - 1,
                     numOre + oreRobots, numClay + clayRobots, numObsidian + obsidianRobots, numGeode + geodeRobots,
                     oreRobots, clayRobots, obsidianRobots, geodeRobots);
         }
 
-        public int potential() {
+        int potential() {
             int num = numGeode;
             int numRobots = geodeRobots;
             for (int i = minutes; i > 0; i--) {
@@ -112,7 +112,7 @@ public class Day19 {
             return new Blueprint(id, robots);
         }
 
-        public Map<Material, Integer> maxResourcesForBuild() {
+        Map<Material, Integer> maxResourcesForBuild() {
             Map<Material, Integer> maxResources = new HashMap<>();
             for (Robot robot : robots) {
                 for (Cost cost : robot.costs) {
@@ -131,11 +131,11 @@ public class Day19 {
             return new Robot(Arrays.stream(costs).map(Cost::parse).toList(), product);
         }
 
-        public boolean canBeBuilt(State state) {
+        boolean canBeBuilt(State state) {
             return costs.stream().noneMatch(cost -> state.num(cost.material) < cost.amount);
         }
 
-        public State build(State state) {
+        State build(State state) {
             State next = state.tick();
             int numOre = next.numOre;
             int numClay = next.numClay;
@@ -178,7 +178,7 @@ public class Day19 {
     private enum Material {
         ore, clay, obsidian, geode;
 
-        public static Material parse(String input) {
+        static Material parse(String input) {
             return valueOf(input.toLowerCase());
         }
     }

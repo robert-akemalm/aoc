@@ -107,4 +107,10 @@ public class Util {
         }
         return ints.stream().mapToInt(i -> i).toArray();
     }
+
+    static void time(Runnable method) {
+        long start = System.currentTimeMillis();
+        method.run();
+        System.out.println("Time: " + (System.currentTimeMillis()-start) + "\n");
+    }
 }

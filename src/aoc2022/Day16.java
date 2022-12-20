@@ -14,14 +14,10 @@ import java.util.stream.Stream;
 
 public class Day16 {
     public static void main(String[] args) {
-        a(TEST_INPUT);
-        a(INPUT);
-        long l = System.currentTimeMillis();
-        b(TEST_INPUT);
-        System.out.println("Time: " + (System.currentTimeMillis() - l));
-        l = System.currentTimeMillis();
-        b(INPUT);
-        System.out.println("Time: " + (System.currentTimeMillis() - l));
+        Util.time(()-> a(TEST_INPUT));
+        Util.time(()->a(INPUT));
+        Util.time(()->b(TEST_INPUT));
+        Util.time(()->b(INPUT));
     }
 
     private static void a(String input) {

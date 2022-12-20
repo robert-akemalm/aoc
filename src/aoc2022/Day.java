@@ -2,10 +2,10 @@ package aoc2022;
 
 public class Day {
     public static void main(String[] args) {
-        a(TEST_INPUT);
-        a(INPUT);
-        b(TEST_INPUT);
-        b(INPUT);
+        Util.time(()-> a(TEST_INPUT));
+        Util.time(()->a(INPUT));
+        Util.time(()->b(TEST_INPUT));
+        Util.time(()->b(INPUT));
     }
 
     private static void a(String input) {

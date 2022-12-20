@@ -7,369 +7,206 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Day16 {
     public static void main(String[] args) {
-        Util.time(()-> a(TEST_INPUT));
-        Util.time(()->a(INPUT));
-        Util.time(()->b(TEST_INPUT));
-        Util.time(()->b(INPUT));
+        Util.time(() -> a(TEST_INPUT));
+        Util.time(() -> a(INPUT));
+        Util.time(() -> b(TEST_INPUT));
+        Util.time(() -> b(INPUT));
     }
 
     private static void a(String input) {
-        Data data = Data.parse(input);
-        int totalMinutes = 30;
-        int maxFlow = (int) Stream.of(data.valves).mapToLong(Valve::flowRate).max().orElse(0);
-        ExplorerRecorder recorder = new ExplorerRecorder(totalMinutes, maxFlow);
-        recorder.add(new Explorer(data.valve("AA"), new Opened(new BitSet()), 0, 0, 0));
-        long max = 0;
-
-        while (recorder.hasNext()) {
-            Explorer explorer = recorder.get();
-            if (explorer.minutes == totalMinutes) {
-                max = Math.max(max, explorer.totalFlow);
-                continue;
-            }
-            if (!explorer.canBecomeHigherThan(max, totalMinutes, maxFlow)) {
-                continue;
-            }
-
-            if (!recorder.isBest(explorer)) {
-                continue;
-
-            }
-
-            Explorer open = explorer.openValve();
-            if (open.flowRate > explorer.flowRate) {
-                recorder.add(open);
-            }
-            for (int neighbour : explorer.current.neighbours) {
-                recorder.add(explorer.moveTo(data.valves[neighbour]));
-            }
-        }
-        System.out.println(max);
-    }
-
-    private static class ExplorerRecorder {
-        final Map<Integer, Map<Opened, Explorer>> keyToOpenedToBest = new HashMap<>();
-        final PriorityQueue<Explorer> heap;
-
-        final Map<Long, Map<Opened, DoubleExplorer>> key2ToOpenedToBest = new HashMap<>();
-        final PriorityQueue<DoubleExplorer> heap2;
-        final int totalMinutes;
-        private final int maxFlowRate;
-        int max = 0;
-
-        private ExplorerRecorder(int totalMinutes, int maxFlowRate) {
-            this.maxFlowRate = maxFlowRate;
-            this.totalMinutes = totalMinutes;
-            heap = new PriorityQueue<>(
-                    (o1, o2) -> Integer.compare(o2.estimatedFlow(totalMinutes), o1.estimatedFlow(totalMinutes)));
-            heap2 = new PriorityQueue<>(
-                (o1, o2) -> Integer.compare(o2.estimatedFlow(totalMinutes), o1.estimatedFlow(totalMinutes)));
-        }
-
-        private static int explorerToKey(Explorer explorer) {
-            return explorer.flowRate * 10_000 + explorer.current.id * 100 + explorer.minutes;
-        }
-
-        private static long explorerToKey2(DoubleExplorer explorer) {
-            if (explorer.current.id < explorer.elephant.id) {
-                int a = explorer.current.id;
-                int b = explorer.elephant.id;
-                int c = explorer.currentMinutes;
-                int d = explorer.elephantMinutes;
-                return explorer.flowRate * 100_000_000L + a * 1_000_000L + b * 10_000L + 100L*c + d;
-            }
-            int a = explorer.elephant.id;
-            int b = explorer.current.id;
-            int c = explorer.elephantMinutes;
-            int d = explorer.currentMinutes;
-            return explorer.flowRate * 100_000_000L + a * 1_000_000L + b * 10_000L + 100L*c + d;
-        }
-
-        boolean isBest(Explorer explorer) {
-            int key = explorerToKey(explorer);
-            Map<Opened, Explorer> openedToBest = keyToOpenedToBest.computeIfAbsent(key, k -> new HashMap<>());
-            Explorer best = openedToBest.get(explorer.opened);
-            if (best == null || best.totalFlow < explorer.totalFlow) {
-                openedToBest.put(explorer.opened, explorer);
-                return true;
-            }
-            return false;
-        }
-
-        boolean isBest(DoubleExplorer explorer) {
-            long key = explorerToKey2(explorer);
-            Map<Opened, DoubleExplorer> openedToBest = key2ToOpenedToBest.computeIfAbsent(key, k -> new HashMap<>());
-            DoubleExplorer best = openedToBest.get(explorer.opened);
-            if (best == null || best.totalFlow < explorer.totalFlow) {
-                openedToBest.put(explorer.opened, explorer);
-                return true;
-            }
-            return false;
-        }
-
-        void add(Explorer explorer) {
-            heap.add(explorer);
-        }
-
-        void add(DoubleExplorer explorer) {
-            if (explorer.minutes() == totalMinutes) {
-                max = Math.max(max, explorer.totalFlow);
-                return;
-            }
-            if (!explorer.canBecomeHigherThan(max, totalMinutes, maxFlowRate)) {
-                return;
-            }
-            heap2.add(explorer);
-        }
-
-        Explorer get() {
-            return heap.poll();
-        }
-
-        DoubleExplorer get2() {
-            return heap2.poll();
-        }
-
-        public boolean hasNext() {
-            return !heap.isEmpty() || !heap2.isEmpty();
-        }
+        Data data = Data.parse(input).optimize();
+        System.out.println(new Recorder(data, 30).findMax());
     }
 
     private static void b(String input) {
-        Data data = Data.parse(input).removeZeroFlowValves();
-        int totalMinutes = 26;
-        int maxFlowRate = Arrays.stream(data.valves).mapToInt(v->v.flowRate).sum();
-        ExplorerRecorder recorder = new ExplorerRecorder(totalMinutes, maxFlowRate);
-        recorder.add(new DoubleExplorer(data.valve("AA"), data.valve("AA"), new Opened(new BitSet()), 0, 0, 0, 0));
-
-        while (recorder.hasNext()) {
-            DoubleExplorer explorer = recorder.get2();
-            if (explorer.flowRate == maxFlowRate) {
-                int sum = explorer.totalFlow + explorer.flowRate * (totalMinutes - explorer.minutes());
-                recorder.max = Math.max(recorder.max, sum);
-                continue;
-            }
-
-            if (!recorder.isBest(explorer)) {
-                continue;
-            }
-            int size = recorder.heap2.size();
-            if (explorer.elephantMinutes == explorer.currentMinutes) {
-                recorder.add(explorer.bothOpen());
-
-                for (int i = 0; i < explorer.current.neighbours.length; i++) {
-                    int neighbour = explorer.current.neighbours[i];
-                    int distance = explorer.current.distances[i];
-                    Valve valve = data.valve(neighbour);
-                    for (int j = 0; j < explorer.elephant.neighbours.length; j++) {
-                        int elephantNeighbour = explorer.elephant.neighbours[j];
-                        int elephantDistance = explorer.elephant.distances[j];
-                        Valve elephantValve = data.valve(elephantNeighbour);
-                        recorder.add(explorer.moveBoth(valve, distance, elephantValve, elephantDistance));
-                    }
-                }
-
-                if (!explorer.opened.isOpen(explorer.elephant.id) && explorer.elephantMinutes == explorer.minutes()) {
-                    for (int i = 0; i < explorer.current.neighbours.length; i++) {
-                        int neighbour = explorer.current.neighbours[i];
-                        int distance = explorer.current.distances[i];
-                        recorder.add(explorer.moveCurrentElephantOpen(data.valves[neighbour], distance));
-                    }
-                }
-
-                if (!explorer.opened.isOpen(explorer.current.id) && explorer.currentMinutes == explorer.minutes()) {
-                    for (int i = 0; i < explorer.elephant.neighbours.length; i++) {
-                        int neighbour = explorer.elephant.neighbours[i];
-                        int distance = explorer.elephant.distances[i];
-                        recorder.add(explorer.moveElephantCurrentOpen(data.valves[neighbour], distance));
-                    }
-                }
-            } else if (explorer.currentMinutes < explorer.elephantMinutes) {
-                if (!explorer.opened.isOpen(explorer.current.id)) {
-                    recorder.add(explorer.openCurrent());
-                }
-                for (int i = 0; i < explorer.current.neighbours.length; i++) {
-                    int neighbour = explorer.current.neighbours[i];
-                    int distance = explorer.current.distances[i];
-                    recorder.add(explorer.moveCurrent(data.valves[neighbour], distance));
-                }
-            } else {
-                if (!explorer.opened.isOpen(explorer.elephant.id)) {
-                    recorder.add(explorer.openElephant());
-                }
-                for (int i = 0; i < explorer.elephant.neighbours.length; i++) {
-                    int neighbour = explorer.elephant.neighbours[i];
-                    int distance = explorer.elephant.distances[i];
-                    recorder.add(explorer.moveElephant(data.valves[neighbour], distance));
-                }
-
-            }
-            if (recorder.heap2.size() == size && explorer.flowRate > 0) {
-                recorder.add(explorer.keepStateMoveTime());
-            }
-
-        }
-        System.out.println("->" + recorder.max);
+        Data data = Data.parse(input).optimize();
+        System.out.println(new Recorder2(data, 26).findMax());
     }
 
-    private static class DoubleExplorer {
-        final Valve current;
-        final Valve elephant;
-        final Opened opened;
-        final int totalFlow;
-        final int flowRate;
-        final int currentMinutes;
-        final int elephantMinutes;
-
-        public DoubleExplorer(Valve current, Valve elephant, Opened opened, int totalFlow, int flowRate, int currentMinutes,
-                              int elephantMinutes) {
-            this.current = current;
-            this.elephant = elephant;
-            this.opened = opened;
-            this.totalFlow = totalFlow;
-            this.flowRate = flowRate;
-            this.currentMinutes = currentMinutes;
-            this.elephantMinutes = elephantMinutes;
+    private static class Recorder {
+        record State(Valve valve, Opened opened, int totalFlow, int flowRate, int minutes) {
         }
 
-        DoubleExplorer moveBoth(Valve valve, int distance, Valve elephant, int elephantDistance) {
-            distance = Math.min(distance, 26-currentMinutes);
-            elephantDistance = Math.min(elephantDistance, 26- elephantMinutes);
-            int steps = Math.min(distance, elephantDistance);
+        final Map<Integer, Map<Opened, State>> keyToOpenedToBest = new HashMap<>();
+        final Data data;
+        final int totalMinutes;
+        final int maxFlow;
+        int max = 0;
 
-            return new DoubleExplorer(valve, elephant, opened, totalFlow + steps*flowRate, flowRate, currentMinutes+distance, elephantMinutes+elephantDistance);
+        private Recorder(Data data, int totalMinutes) {
+            this.data = data;
+            this.totalMinutes = totalMinutes;
+            this.maxFlow = Stream.of(data.valves).mapToInt(Valve::flowRate).sum();
         }
 
-        DoubleExplorer moveElephant(Valve elephant, int elephantDistance) {
-            elephantDistance = Math.min(elephantDistance, 26- elephantMinutes);
-            int steps = Math.min(elephantMinutes-currentMinutes, elephantDistance);
-            return new DoubleExplorer(current, elephant, opened, totalFlow + steps*flowRate, flowRate, currentMinutes, elephantMinutes+elephantDistance);
+        int findMax() {
+            expand(new State(data.valve("AA"), new Opened(new BitSet()), 0, 0, 0));
+            return max;
         }
 
-        DoubleExplorer moveCurrent(Valve valve, int distance) {
-            distance = Math.min(distance, 26-currentMinutes);
-            int steps = Math.min(elephantMinutes-currentMinutes, distance);
-            return new DoubleExplorer(valve, elephant, opened, totalFlow + steps*flowRate, flowRate, currentMinutes+distance, elephantMinutes);
-        }
-
-        public DoubleExplorer openCurrent() {
-            return new DoubleExplorer(current, elephant, opened.add(current.id), totalFlow + flowRate,
-                    flowRate + current.flowRate, currentMinutes + 1, elephantMinutes);
-        }
-
-        public DoubleExplorer openElephant() {
-            return new DoubleExplorer(current, elephant, opened.add(elephant.id), totalFlow + flowRate,
-                    flowRate + elephant.flowRate, currentMinutes, elephantMinutes+1);
-        }
-
-        DoubleExplorer moveElephantCurrentOpen(Valve valve, int distance) {
-            if (opened.isOpen(current.id)) {
-                return this;
-            }
-
-            if (currentMinutes == elephantMinutes) {
-                return new DoubleExplorer(current, valve, opened.add(current.id), totalFlow + flowRate,
-                        flowRate + current.flowRate, currentMinutes + 1, elephantMinutes + distance);
-            } else {
-                return new DoubleExplorer(current, elephant, opened.add(current.id), totalFlow + flowRate,
-                        flowRate + current.flowRate, currentMinutes+1, elephantMinutes);
-
+        private void expand(State state) {
+            max = Math.max(max, state.totalFlow + state.flowRate * (totalMinutes - state.minutes));
+            if (shouldEvaluate(state)) {
+                int[] neighbours = state.valve.neighbours;
+                for (int i = 0; i < neighbours.length; i++) {
+                    Valve neighbour = data.valves[neighbours[i]];
+                    if (!state.opened.isOpen(neighbour.id)) {
+                        int distance = state.valve.distances[i];
+                        Opened opened = state.opened.open(neighbour.id);
+                        int totalFlow = state.totalFlow + distance * state.flowRate;
+                        int flowRate = state.flowRate + neighbour.flowRate;
+                        expand(new State(neighbour, opened, totalFlow, flowRate, state.minutes + distance));
+                    }
+                }
             }
         }
 
-        DoubleExplorer moveCurrentElephantOpen(Valve valve, int distance) {
-            if (opened.isOpen(elephant.id)) {
-                return this;
+        private boolean shouldEvaluate(State state) {
+            return state.minutes != totalMinutes &&
+                   state.opened.cnt() != data.valves.length &&
+                   canBecomeHigherThanMax(state) &&
+                   isBest(state);
+        }
+
+        private boolean isBest(State explorer) {
+            int key = explorerToKey(explorer);
+            Map<Opened, State> openedToBest = keyToOpenedToBest.computeIfAbsent(key, k -> new HashMap<>());
+            State best = openedToBest.get(explorer.opened);
+            if (best == null || best.totalFlow < explorer.totalFlow) {
+                openedToBest.put(explorer.opened, explorer);
+                return true;
             }
-            if (currentMinutes == elephantMinutes) {
-                return new DoubleExplorer(valve, elephant, opened.add(elephant.id), totalFlow + flowRate,
-                        flowRate + elephant.flowRate, currentMinutes + distance, elephantMinutes + 1);
-            } else {
-                return new DoubleExplorer(current, elephant, opened.add(elephant.id), totalFlow + flowRate,
-                        flowRate + elephant.flowRate, currentMinutes, elephantMinutes + 1);
-            }
+            return false;
         }
 
-        DoubleExplorer bothOpen() {
-            if (current.id == elephant.id || opened.isOpen(current.id) || opened.isOpen(elephant.id)) {
-                return this;
-            }
-            Opened opened = this.opened.add(current.id).add(elephant.id);
-            return new DoubleExplorer(current, elephant, opened, totalFlow + flowRate,
-                    flowRate + current.flowRate + elephant.flowRate, currentMinutes + 1, elephantMinutes+1);
+        private static int explorerToKey(State state) {
+            return state.flowRate * 10_000 + state.valve.id * 100 + state.minutes;
         }
 
-        DoubleExplorer keepStateMoveTime() {
-            int cMinutes = currentMinutes == minutes() ? currentMinutes+1:currentMinutes;
-            int eMinutes = elephantMinutes == minutes() ? elephantMinutes+1 : elephantMinutes;
-            return new DoubleExplorer(current, elephant, opened, totalFlow + flowRate,
-                    flowRate, cMinutes, eMinutes);
-        }
-
-        public boolean canBecomeHigherThan(long max, int maxMinutes, int maxFlowRate) {
-            int potential = totalFlow + (maxMinutes - minutes()) * maxFlowRate;
-            return potential >= max;
-        }
-
-        int minutes() {
-            return Math.min(currentMinutes, elephantMinutes);
-        }
-
-        int estimatedFlow(int timeLimit) {
-            return totalFlow + flowRate * (timeLimit - minutes());
+        private boolean canBecomeHigherThanMax(State state) {
+            return state.totalFlow + maxFlow * (totalMinutes - state.minutes) > max;
         }
     }
 
-    private static class Explorer {
-        final Valve current;
-        final Opened opened;
-        final int totalFlow;
-        final int flowRate;
-        final int minutes;
-
-        public Explorer(Valve current, Opened opened, int totalFlow, int flowRate, int minutes) {
-            this.current = current;
-            this.opened = opened;
-            this.totalFlow = totalFlow;
-            this.flowRate = flowRate;
-            this.minutes = minutes;
-        }
-
-        Explorer moveTo(Valve valve) {
-            return new Explorer(valve, opened, totalFlow + flowRate, flowRate, minutes + 1);
-        }
-
-        Explorer openValve() {
-            if (opened.isOpen(current.id)) {
-                return this;
+    private static class Recorder2 {
+        record State(Valve v1, Valve v2, Opened opened, int totalFlow, int flowRate, int minutes1, int minutes2,
+                     int additionalFlow) {
+            int minutes() {
+                return Math.min(minutes1, minutes2);
             }
-            return new Explorer(current, opened.add(current.id), totalFlow + flowRate, flowRate + current.flowRate,
-                    minutes + 1);
         }
 
-        int estimatedFlow(int timeLimit) {
-            return totalFlow + flowRate * (timeLimit - minutes);
+        final Map<Long, Map<Opened, State>> keyToOpenedToBest = new HashMap<>();
+        final Data data;
+        final int totalMinutes;
+        final int maxFlow;
+        int max = 0;
+
+        private Recorder2(Data data, int totalMinutes) {
+            this.data = data;
+            this.totalMinutes = totalMinutes;
+            this.maxFlow = Stream.of(data.valves).mapToInt(Valve::flowRate).sum();
         }
 
-        public boolean canBecomeHigherThan(long max, int maxMinutes, int maxAdditionalFlow) {
-            int potential = totalFlow;
-            int flow = flowRate;
-            boolean addFlow = true;
-            for (int i = minutes; i <= maxMinutes; i++) {
-                potential += flow;
-                if (addFlow) {
-                    flow += maxAdditionalFlow;
+        int findMax() {
+            Valve start = data.valve("AA");
+            expand(new State(start, start, new Opened(new BitSet()), 0, 0, 0, 0, 0));
+            return max;
+        }
+
+        private void expand(State s) {
+            int endFlow = s.totalFlow
+                          + s.flowRate * Math.abs(s.minutes1 - s.minutes2)
+                          + (s.flowRate + s.additionalFlow) * (totalMinutes - Math.max(s.minutes1, s.minutes2));
+            max = Math.max(max, endFlow);
+            if (shouldEvaluate(s)) {
+                if (s.minutes1 < s.minutes2) {
+                    int[] neighbours = s.v1.neighbours;
+                    for (int i = 0; i < neighbours.length; i++) {
+                        Valve n = data.valves[neighbours[i]];
+                        if (!s.opened.isOpen(n.id)) {
+                            Opened opened = s.opened.open(n.id);
+                            int minutes1 = Math.min(s.minutes1 + s.v1.distances[i], totalMinutes);
+                            int distance = Math.min(minutes1 - s.minutes1, s.minutes2 - s.minutes1);
+                            int totalFlow = s.totalFlow + distance * s.flowRate;
+                            if (minutes1 < s.minutes2) {
+                                int flowRate = s.flowRate + n.flowRate;
+                                expand(new State(n, s.v2, opened, totalFlow, flowRate, minutes1, s.minutes2, s.additionalFlow));
+                            } else if (minutes1 == s.minutes2) {
+                                int flowRate = s.flowRate + n.flowRate + s.additionalFlow;
+                                expand(new State(n, s.v2, opened, totalFlow, flowRate, minutes1, s.minutes2, 0));
+                            } else {
+                                int flowRate = s.flowRate + s.additionalFlow;
+                                expand(new State(n, s.v2, opened, totalFlow, flowRate, minutes1, s.minutes2, n.flowRate));
+                            }
+                        }
+                    }
+                } else {
+                    int[] neighbours = s.v2.neighbours;
+                    for (int i = 0; i < neighbours.length; i++) {
+                        Valve n = data.valves[neighbours[i]];
+                        if (!s.opened.isOpen(n.id)) {
+                            Opened opened = s.opened.open(n.id);
+                            int minutes2 = Math.min(s.minutes2 + s.v2.distances[i], totalMinutes);
+                            int distance = Math.min(minutes2 - s.minutes2, s.minutes1 - s.minutes2);
+                            int totalFlow = s.totalFlow + distance * s.flowRate;
+                            if (minutes2 < s.minutes1) {
+                                int flowRate = s.flowRate + n.flowRate;
+                                expand(new State(s.v1, n, opened, totalFlow, flowRate, s.minutes1, minutes2, s.additionalFlow));
+                            } else if (minutes2 == s.minutes1) {
+                                int flowRate = s.flowRate + n.flowRate + s.additionalFlow;
+                                expand(new State(s.v1, n, opened, totalFlow, flowRate, s.minutes1, minutes2, 0));
+                            } else {
+                                int flowRate = s.flowRate + s.additionalFlow;
+                                expand(new State(s.v1, n, opened, totalFlow, flowRate, s.minutes1, minutes2, n.flowRate));
+                            }
+                        }
+                    }
                 }
-                addFlow = !addFlow;
             }
-            return potential > max;
+        }
+
+        private boolean shouldEvaluate(State state) {
+            return state.minutes() != totalMinutes &&
+                   state.opened.cnt() != data.valves.length &&
+                   canBecomeHigherThanMax(state) &&
+                   isBest(state);
+        }
+
+        private boolean isBest(State explorer) {
+            long key = explorerToKey(explorer);
+            Map<Opened, State> openedToBest = keyToOpenedToBest.computeIfAbsent(key, k -> new HashMap<>());
+            State best = openedToBest.get(explorer.opened);
+            if (best == null || best.totalFlow < explorer.totalFlow) {
+                openedToBest.put(explorer.opened, explorer);
+                return true;
+            }
+            return false;
+        }
+
+        private static long explorerToKey(State explorer) {
+            if (explorer.v1.id < explorer.v2.id) {
+                int a = explorer.v1.id;
+                int b = explorer.v2.id;
+                int c = explorer.minutes1;
+                int d = explorer.minutes2;
+                return explorer.flowRate * 100_000_000L + a * 1_000_000L + b * 10_000L + 100L * c + d;
+            }
+            int a = explorer.v2.id;
+            int b = explorer.v1.id;
+            int c = explorer.minutes2;
+            int d = explorer.minutes1;
+            return explorer.flowRate * 100_000_000L + a * 1_000_000L + b * 10_000L + 100L * c + d;
+        }
+
+        private boolean canBecomeHigherThanMax(State state) {
+            return state.totalFlow + maxFlow * (totalMinutes - state.minutes()) > max;
         }
     }
 
@@ -405,7 +242,7 @@ public class Day16 {
             return valves[ix];
         }
 
-        Data removeZeroFlowValves() {
+        public Data optimize() {
             List<Valve> nonZeroValves = Stream.of(valves).filter(v -> v.flowRate() > 0).toList();
             Map<String, Integer> newNameToValveIx = new HashMap<>();
             for (int i = 0; i < nonZeroValves.size(); i++) {
@@ -423,19 +260,17 @@ public class Day16 {
                 Set<Valve> nextToExpand = new HashSet<>();
                 Set<Valve> seen = new HashSet<>();
                 seen.add(old);
-                while (!toExpand.isEmpty()) {
+                while (!toExpand.isEmpty() && distance < nameToValveIx.size()) {
                     for (Valve expand : toExpand) {
                         for (int neighbour : expand.neighbours) {
                             Valve n = valve(neighbour);
                             if (seen.add(n)) {
                                 if (n.flowRate > 0) {
-                                    neighbourToDistance.put(newNameToValveIx.get(n.name), distance);
-                                } else {
-                                    nextToExpand.add(n);
+                                    neighbourToDistance.put(newNameToValveIx.get(n.name), distance + 1);
                                 }
+                                nextToExpand.add(n);
                             }
                         }
-
                     }
                     distance++;
                     Set<Valve> tmp = toExpand;
@@ -443,12 +278,13 @@ public class Day16 {
                     nextToExpand = tmp;
                     nextToExpand.clear();
                 }
-                int[] neighbours = neighbourToDistance.keySet().stream().mapToInt(i->i).toArray();
+                int[] neighbours = neighbourToDistance.keySet().stream().mapToInt(i -> i).toArray();
                 int[] distances = IntStream.of(neighbours).map(neighbourToDistance::get).toArray();
                 newValves[e.getValue()] = new Valve(e.getValue(), old.name, old.flowRate, neighbours, distances);
             }
             return new Data(newValves, newNameToValveIx);
         }
+
     }
 
     private record Valve(int id, String name, int flowRate, int[] neighbours, int[] distances) {
@@ -471,11 +307,11 @@ public class Day16 {
             this(openValves, openValves.cardinality());
         }
 
-        Opened add(int valve) {
+        Opened open(int valve) {
             BitSet b = new BitSet();
             b.or(openValves);
             b.set(valve);
-            return new Opened(b, cnt+1);
+            return new Opened(b, cnt + 1);
         }
 
         public boolean isOpen(int id) {
@@ -498,10 +334,6 @@ public class Day16 {
         @Override
         public int hashCode() {
             return openValves.hashCode();
-        }
-
-        public int count() {
-            return cnt;
         }
     }
 

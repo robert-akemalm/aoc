@@ -36,13 +36,11 @@ public class Day19 {
     private static class QualityTester {
         final Set<State> seen = new HashSet<>();
         final Blueprint blueprint;
-        final Map<Material, Integer> maxResourcesForBuild;
         final int timeLimit;
         int max = 0;
 
         QualityTester(Blueprint blueprint, int timeLimit) {
             this.blueprint = blueprint;
-            this.maxResourcesForBuild = blueprint.maxResourcesForBuild();
             this.timeLimit = timeLimit;
         }
 
@@ -57,18 +55,31 @@ public class Day19 {
                 return;
             }
 
-            for (Robot robot : blueprint.robots) {
-                if (robot.canBeBuilt(state)) {
-                    expand(robot.build(state));
+            if (blueprint.geode.canBeBuilt(state)) {
+                expand(blueprint.geode.build(state));
+            } else {
+                boolean needMoreObsidianRobots = blueprint.maxRequired.get(Material.obsidian) > state.obsidianRobots;
+                boolean needMoreClayRobots = blueprint.maxRequired.get(Material.clay) > state.clayRobots;
+                boolean needMoreOreRobots = blueprint.maxRequired.get(Material.ore) > state.oreRobots;
+
+                boolean canBuildObsidian = blueprint.obsidian.canBeBuilt(state);
+                boolean canBuildClay = blueprint.clay.canBeBuilt(state);
+                boolean canBuildOre = blueprint.ore.canBeBuilt(state);
+                boolean canBuildEveryType = canBuildObsidian && canBuildClay && canBuildOre;
+
+                if (needMoreObsidianRobots && canBuildObsidian) {
+                    expand(blueprint.obsidian.build(state));
+                }
+                if (needMoreClayRobots && canBuildClay) {
+                    expand(blueprint.clay.build(state));
+                }
+                if (needMoreOreRobots && canBuildOre) {
+                    expand(blueprint.ore.build(state));
+                }
+                if (!canBuildEveryType) {
+                    expand(state.tick());
                 }
             }
-            if (canSkipBuild(state)) {
-                expand(state.tick());
-            }
-        }
-
-        private boolean canSkipBuild(State state) {
-            return !blueprint.robots.stream().allMatch(r -> r.canBeBuilt(state));
         }
     }
 
@@ -101,25 +112,19 @@ public class Day19 {
         }
     }
 
-    private record Blueprint(int id, List<Robot> robots) {
+    private record Blueprint(int id, Robot ore, Robot clay, Robot obsidian, Robot geode, Map<Material, Integer> maxRequired) {
 
         static Blueprint parse(String input) {
             String[] idAndRobots = input.split(":");
             int id = Util.extractInts(idAndRobots[0])[0];
-            List<Robot> robots = Arrays.stream(idAndRobots[1].split("\\.")).map(Robot::parse)
-                                       .sorted((o1, o2) -> Integer.compare(o2.product.ordinal(), o1.product.ordinal()))
-                                       .toList();
-            return new Blueprint(id, robots);
-        }
-
-        Map<Material, Integer> maxResourcesForBuild() {
-            Map<Material, Integer> maxResources = new HashMap<>();
+            Robot[] robots = Arrays.stream(idAndRobots[1].split("\\.")).map(Robot::parse).toArray(Robot[]::new);
+            Map<Material, Integer> maxResourcesRequired = new HashMap<>();
             for (Robot robot : robots) {
                 for (Cost cost : robot.costs) {
-                    maxResources.compute(cost.material, (material, max) -> Math.max(cost.amount, max == null ? 0 : max));
+                    maxResourcesRequired.compute(cost.material, (material, max) -> Math.max(cost.amount, max == null ? 0 : max));
                 }
             }
-            return maxResources;
+            return new Blueprint(id, robots[0], robots[1], robots[2], robots[3], maxResourcesRequired);
         }
     }
 

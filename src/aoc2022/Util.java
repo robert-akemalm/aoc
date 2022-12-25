@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 public class Util {
 
     static void print(boolean[][] matrix, char trueChar, char falseChar) {
-        for (int i = matrix.length-1; i >= 0; i--) {
+        for (int i = 0; i < matrix.length; i++) {
             boolean[] row = matrix[i];
             for (boolean b : row) {
                 System.out.print(b ? trueChar : falseChar);
@@ -86,6 +86,18 @@ public class Util {
 
         public List<Pos> neighbours() {
             return new ArrayList<>(List.of(new Pos(x + 1, y), new Pos(x - 1, y), new Pos(x, y + 1), new Pos(x, y - 1)));
+        }
+
+        public List<Pos> allNeighbours() {
+            List<Pos> all = new ArrayList<>();
+            for (int nX = x-1; nX <=x+1 ; nX++) {
+                for (int nY = y-1; nY <=y+1 ; nY++) {
+                    if (nX != x || nY != y) {
+                        all.add(new Pos(nX, nY));
+                    }
+                }
+            }
+            return all;
         }
 
         @Override

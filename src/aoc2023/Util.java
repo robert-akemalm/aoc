@@ -120,6 +120,16 @@ public class Util {
         return ints.stream().mapToInt(i -> i).toArray();
     }
 
+    public static long[] extractLongs(String input) {
+        Pattern p = Pattern.compile("-?[0-9]+");
+        Matcher m = p.matcher(input);
+        List<Long> longs = new ArrayList<>();
+        while (m.find()) {
+            longs.add(Long.parseLong(m.group()));
+        }
+        return longs.stream().mapToLong(i -> i).toArray();
+    }
+
     static void time(Runnable method) {
         long start = System.currentTimeMillis();
         method.run();

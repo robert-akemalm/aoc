@@ -3,7 +3,6 @@ package aoc2023;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 public class Day9 {
@@ -15,17 +14,17 @@ public class Day9 {
 
     private static void b(Input input) {
         input.sequences.forEach(Sequence::addPrevious);
-        long sum = input.sequences.stream().mapToLong(s -> s.previous.get()).sum();
+        long sum = input.sequences.stream().mapToLong(s -> s.values.getFirst()).sum();
         System.out.println(sum);
     }
 
-    record Sequence(List<Long> values, Sequence diffs, AtomicLong previous) {
+    record Sequence(List<Long> values, Sequence diffs) {
         static Sequence create(List<Long> values) {
             if (values.stream().allMatch(v -> v == 0)) {
-                return new Sequence(new ArrayList<>(values), null, new AtomicLong());
+                return new Sequence(new ArrayList<>(values), null);
             }
             List<Long> diffs = IntStream.range(0, values.size() - 1).mapToObj(i -> values.get(i + 1) - values.get(i)).toList();
-            return new Sequence(new ArrayList<>(values), create(diffs), new AtomicLong());
+            return new Sequence(new ArrayList<>(values), create(diffs));
         }
 
         void addNext() {
@@ -38,9 +37,11 @@ public class Day9 {
         }
 
         void addPrevious() {
-            if (diffs != null) {
+            if (diffs == null) {
+                values.add(0, 0L);
+            } else {
                 diffs.addPrevious();
-                previous.set(values.getFirst() - diffs.previous.get());
+                values.add(0, values.getFirst() - diffs.values.getFirst());
             }
         }
     }

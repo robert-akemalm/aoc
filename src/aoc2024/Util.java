@@ -80,7 +80,27 @@ public class Util {
         Util.print(print, posChar, other);
     }
 
-    public enum Direction {UP, DOWN, LEFT, RIGHT}
+    public enum Direction {
+        UP, DOWN, LEFT, RIGHT;
+
+        Direction turnRight() {
+            return switch (this) {
+                case UP -> RIGHT;
+                case DOWN -> LEFT;
+                case LEFT -> UP;
+                case RIGHT -> DOWN;
+            };
+        }
+
+        Direction turnLeft() {
+            return switch (this) {
+                case UP -> LEFT;
+                case DOWN -> RIGHT;
+                case LEFT -> DOWN;
+                case RIGHT -> UP;
+            };
+        }
+    }
 
     public record Pos(int x, int y) {
 

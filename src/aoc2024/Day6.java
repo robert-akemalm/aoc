@@ -38,12 +38,7 @@ public class Day6 {
             }
             Pos next = guard.next(direction);
             if (obstacles.contains(next)) {
-                direction = switch (direction) {
-                    case UP -> Direction.RIGHT;
-                    case DOWN -> Direction.LEFT;
-                    case LEFT -> Direction.UP;
-                    case RIGHT -> Direction.DOWN;
-                };
+                direction = direction.turnRight();
             } else {
                 guard = next;
             }

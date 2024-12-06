@@ -11,8 +11,7 @@ import java.util.regex.Pattern;
 public class Util {
 
     static void print(boolean[][] matrix, char trueChar, char falseChar) {
-        for (int i = 0; i < matrix.length; i++) {
-            boolean[] row = matrix[i];
+        for (boolean[] row : matrix) {
             for (boolean b : row) {
                 System.out.print(b ? trueChar : falseChar);
             }
@@ -42,8 +41,7 @@ public class Util {
         }
         StringBuilder sb = new StringBuilder();
         if (yDesc) {
-            for (int i = 0; i < print.length; i++) {
-                char[] row = print[i];
+            for (char[] row : print) {
                 for (char b : row) {
                     sb.append(b);
                 }
@@ -82,7 +80,18 @@ public class Util {
         Util.print(print, posChar, other);
     }
 
+    public enum Direction {UP, DOWN, LEFT, RIGHT}
+
     public record Pos(int x, int y) {
+
+        public Pos next(Direction direction) {
+            return switch (direction) {
+                case UP -> new Pos(x, y - 1);
+                case DOWN -> new Pos(x, y + 1);
+                case LEFT -> new Pos(x - 1, y);
+                case RIGHT -> new Pos(x + 1, y);
+            };
+        }
 
         public List<Pos> neighbours() {
             return new ArrayList<>(List.of(new Pos(x + 1, y), new Pos(x - 1, y), new Pos(x, y + 1), new Pos(x, y - 1)));

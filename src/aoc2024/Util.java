@@ -113,14 +113,18 @@ public class Util {
             };
         }
 
+        Pos move(int dx, int dy) {
+            return new Pos(x + dx, y + dy);
+        }
+
         public List<Pos> neighbours() {
             return new ArrayList<>(List.of(new Pos(x + 1, y), new Pos(x - 1, y), new Pos(x, y + 1), new Pos(x, y - 1)));
         }
 
         public List<Pos> allNeighbours() {
             List<Pos> all = new ArrayList<>();
-            for (int nX = x-1; nX <=x+1 ; nX++) {
-                for (int nY = y-1; nY <=y+1 ; nY++) {
+            for (int nX = x - 1; nX <= x + 1; nX++) {
+                for (int nY = y - 1; nY <= y + 1; nY++) {
                     if (nX != x || nY != y) {
                         all.add(new Pos(nX, nY));
                     }
@@ -129,13 +133,13 @@ public class Util {
             return all;
         }
 
+        public int manhattanDistanceTo(Pos pos) {
+            return Math.abs(pos.x - x) + Math.abs(pos.y - y);
+        }
+
         @Override
         public String toString() {
             return x + "," + y;
-        }
-
-        public int manhattanDistanceTo(Pos pos) {
-            return Math.abs(pos.x - x) + Math.abs(pos.y - y);
         }
     }
 
@@ -162,6 +166,6 @@ public class Util {
     static void time(Runnable method) {
         long start = System.currentTimeMillis();
         method.run();
-        System.out.println("Time: " + (System.currentTimeMillis()-start) + "\n");
+        System.out.println("Time: " + (System.currentTimeMillis() - start) + "\n");
     }
 }

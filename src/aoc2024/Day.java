@@ -21,9 +21,9 @@ public class Day {
     private static final String INPUT = "";
 
     public static void main(String[] args) {
-        Util.time(()-> a(Input.parse(TEST_INPUT)));
-        Util.time(()->a(Input.parse(INPUT)));
-        Util.time(()->b(Input.parse(TEST_INPUT)));
-        Util.time(()->b(Input.parse(INPUT)));
+        Util.time(() -> a(Input.parse(TEST_INPUT)));
+        Util.time(() -> a(Input.parse(INPUT)));
+        Util.time(() -> b(Input.parse(TEST_INPUT)));
+        Util.time(() -> b(Input.parse(INPUT)));
     }
 }

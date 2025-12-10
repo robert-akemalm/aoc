@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class Day10 {
@@ -51,12 +52,12 @@ public class Day10 {
     }
 
     private static void b(Input input) {
-        System.out.println(input.machines.parallelStream().mapToInt(DFS::minFor).sum());
+        System.out.println(input.machines.stream().mapToInt(DFS::minPresses).sum());
     }
 
     private record DFS(List<Button> buttons, int[] lastButtonIndexForToggle, int[] maxJoltageAfterIx, AtomicInteger minPresses) {
 
-        static int minFor(Machine machine) {
+        static int minPresses(Machine machine) {
             List<Button> buttons = machine.buttons;
             buttons.sort(Comparator.comparingInt(b -> -b.toggles.length));
 
@@ -67,8 +68,7 @@ public class Day10 {
                 maxJoltageAfterIx[i] = Math.max(maxJoltageAfterIx[i + 1], buttons.get(i).toggles.length);
             }
 
-            int[] lastButtonIndexForToggle = new int[machine.expectedLights.length];
-            Arrays.fill(lastButtonIndexForToggle, -1);
+            int[] lastButtonIndexForToggle = new int[machine.expectedJoltage.length];
             for (int i = 0; i < buttons.size(); i++) {
                 for (int toggle : buttons.get(i).toggles) {
                     lastButtonIndexForToggle[toggle] = i;
@@ -76,55 +76,58 @@ public class Day10 {
             }
 
             DFS dfs = new DFS(buttons, lastButtonIndexForToggle, maxJoltageAfterIx, new AtomicInteger(Integer.MAX_VALUE));
-            dfs.search(0, 0, machine.expectedJoltage, Arrays.stream(machine.expectedJoltage).sum());
+            int[] firstButtonToggles = buttons.getFirst().toggles;
+            int max = Arrays.stream(firstButtonToggles).map(i -> machine.expectedJoltage[i]).min().orElseThrow();
+            IntStream.rangeClosed(0, max).parallel().forEach(presses -> {
+                int[] remains = Arrays.copyOf(machine.expectedJoltage, machine.expectedJoltage.length);
+                for (int toggle : firstButtonToggles) {
+                    remains[toggle] -= presses;
+                }
+                dfs.search(1, presses, remains, Arrays.stream(remains).sum());
+            });
             return dfs.minPresses().get();
         }
 
-        void search(int buttonIndex, int totalPresses, int[] remainingJoltage, int joltageLeft) {
-            int currentMin = minPresses.get();
-            if (totalPresses >= currentMin || buttonIndex >= buttons.size()) {
+        void search(int buttonIndex, int totalPresses, int[] remaining, int totalLeft) {
+            if (buttonIndex >= buttons.size()) {
                 return;
             }
 
+            int currentMin = minPresses.get();
             if (currentMin != Integer.MAX_VALUE) {
                 int pressesLeft = currentMin - totalPresses - 1;
-                if (joltageLeft > pressesLeft * maxJoltageAfterIx[buttonIndex]) {
+                if (totalLeft > pressesLeft * maxJoltageAfterIx[buttonIndex]) {
                     return;
                 }
             }
+
             int[] toggles = buttons.get(buttonIndex).toggles;
-
             int maxPressesOnButton = Integer.MAX_VALUE;
-            int min = 1;
-            boolean mustUse = false;
+            int minPressesOnButton = 0;
             for (int idx : toggles) {
-                int rem = remainingJoltage[idx];
+                int rem = remaining[idx];
                 maxPressesOnButton = Math.min(maxPressesOnButton, rem);
-                if (lastButtonIndexForToggle[idx] < buttonIndex && rem > 0) {
-                    return;
-                } else if (lastButtonIndexForToggle[idx] == buttonIndex && rem > 0) {
-                    mustUse = true;
-                    min = Math.max(rem, min);
+                if (lastButtonIndexForToggle[idx] == buttonIndex && rem > 0) {
+                    minPressesOnButton = Math.max(rem, minPressesOnButton);
                 }
             }
 
-            for (int i = maxPressesOnButton; i >= min; i--) {
+            for (int i = maxPressesOnButton; i >= minPressesOnButton; i--) {
                 for (int toggle : toggles) {
-                    remainingJoltage[toggle] -= i;
-                    joltageLeft -= i;
+                    remaining[toggle] -= i;
+                    totalLeft -= i;
                 }
-                if (joltageLeft == 0) {
-                    minPresses.set(Math.min(currentMin, totalPresses + i));
+                if (totalLeft == 0) {
+                    while (!minPresses.compareAndSet(currentMin, Math.min(currentMin, totalPresses + i))) {
+                        currentMin = minPresses.get();
+                    }
                 } else {
-                    search(buttonIndex + 1, totalPresses + i, remainingJoltage, joltageLeft);
+                    search(buttonIndex + 1, totalPresses + i, remaining, totalLeft);
                 }
                 for (int toggle : toggles) {
-                    remainingJoltage[toggle] += i;
-                    joltageLeft += i;
+                    remaining[toggle] += i;
+                    totalLeft += i;
                 }
-            }
-            if (!mustUse) {
-                search(buttonIndex + 1, totalPresses, remainingJoltage, joltageLeft);
             }
         }
     }

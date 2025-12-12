@@ -3,6 +3,7 @@ package aoc2025;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -89,6 +90,7 @@ public class Day12 {
                     steps.add(allPossibilities);
                 }
             }
+            steps.sort(Comparator.comparingInt(Set::size));
             DFS dfs = new DFS(width, length, new HashSet<>(), steps);
             return dfs.evaluate(new BitSet(), 0);
         }
